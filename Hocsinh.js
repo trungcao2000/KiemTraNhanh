@@ -115,12 +115,17 @@ export const Hocsinh = ({ students, setStudents }) => {
             </Text>
 
             <TextInput
-                placeholder="Nhập tên học sinh..."
+                placeholder="Tạo mới, tìm theo tên..."
                 value={name}
                 onChangeText={setName}
-                style={styles.textInput}
+                style={{
+                    margin: 10,
+                    padding: 10,
+                    borderWidth: 1,
+                    borderColor: '#ccc',
+                    borderRadius: 8,
+                }}
             />
-
             <TouchableOpacity
                 onPress={addOrUpdateStudent}
                 style={styles.button}
@@ -153,18 +158,7 @@ export const Hocsinh = ({ students, setStudents }) => {
                     </TouchableOpacity>
                 </View>
             )}
-            <TextInput
-                placeholder="Tìm tên học sinh..."
-                value={name}
-                onChangeText={setName}
-                style={{
-                    margin: 10,
-                    padding: 10,
-                    borderWidth: 1,
-                    borderColor: '#ccc',
-                    borderRadius: 8,
-                }}
-            />
+
 
             {/* Danh sách chờ */}
             {pendingStudents.length > 0 && (
@@ -172,7 +166,7 @@ export const Hocsinh = ({ students, setStudents }) => {
                     <Text style={styles.title}>
                         📝 Danh sách chờ xác nhận:
                     </Text>
-                    {filteredStudents.map((student, index) => (
+                    {pendingStudents.map((student, index) => (
                         <View
                             key={index}
                             style={{

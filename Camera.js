@@ -372,6 +372,19 @@ export const Camera = ({ results, setResults, questions = [] }) => {
         </View>
     );
 
+    const handleChange = (text) => {
+        // Check if the input is empty
+        if (text === '') {
+            setGoTo('');  // If the input is empty, keep the value empty
+        } else {
+            const num = parseInt(text, 10);  // Convert input to a number
+
+            // Check if the input is a valid number, and within the valid range
+            if (!isNaN(num) && num > 0 && num <= questions.length) {
+                setGoTo(num);  // Set the number only if it's between 1 and arrayLength
+            }
+        }
+    };
     const renderQuestionView = () => (
         <View style={{ flex: 1 }}>
             {/* Thiết lập thời gian cho mỗi câu */}
@@ -440,8 +453,8 @@ export const Camera = ({ results, setResults, questions = [] }) => {
             <TextInput
                 placeholder="Di chuyển tới câu"
                 keyboardType="numeric"
-                value={goTo - 1}
-                onChangeText={setGoTo}
+                value={goTo === '' ? '' : String(goTo)}  // Show empty if goTo is empty
+                onChangeText={handleChange}  // Use the custom handleChange function
                 style={styles.textInput}
             />
 
@@ -493,10 +506,7 @@ export const Camera = ({ results, setResults, questions = [] }) => {
                                             paddingHorizontal: 16,
                                             justifyContent: 'center',
                                             alignItems: 'center',
-                                            shadowColor: '#000',
-                                            shadowOffset: { width: 0, height: 1 },
-                                            shadowOpacity: 0.1,
-                                            shadowRadius: 4,
+                                            boxShadow: '0px 1px 4px rgba(0, 0, 0, 0.1)',
                                             elevation: 3,
                                         }}
                                     >
@@ -542,7 +552,7 @@ export const Camera = ({ results, setResults, questions = [] }) => {
 
     return (
 
-        <View style={{ flex: 1, margin: 5, padding: 5 }}>{cameraVisible ? (renderCameraView()) : (renderQuestionView())}</View>
+        <View style={{ flex: 1, paddingHorizontal: 20 }}>{cameraVisible ? (renderCameraView()) : (renderQuestionView())}</View>
 
     );
 };

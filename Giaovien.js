@@ -274,7 +274,7 @@ export const Giaovien = ({ questions, setQuestions, clearAllData }) => {
             />
             {/* Danh sách câu hỏi */}
             {filteredQuestions.length > 0 && (
-                <ScrollView style={{ flex: 1, marginHorizontal: 20 }}>
+                <ScrollView style={{ flex: 1 }}>
                     <Text style={styles.title}>
                         Danh sách câu hỏi
                     </Text>
@@ -286,32 +286,53 @@ export const Giaovien = ({ questions, setQuestions, clearAllData }) => {
                             style={{
                                 borderWidth: 1,
                                 borderColor: '#ccc',
-                                borderRadius: 8,
-                                padding: 12,
-                                marginBottom: 12,
+                                borderRadius: 5,
+                                padding: 10,
+                                marginBottom: 10,
                                 backgroundColor: '#f9f9f9',
                             }}
                         >
                             {/* Hàng chứa câu hỏi + nút */}
-                            <View style={styles.container}>
-                                <Text style={styles.title}>
-                                    Câu {index + 1}: {q.question}
-                                </Text>
-                            </View>
+
+                            <Text style={styles.title}>
+                                Câu {index + 1}: {q.question}
+                            </Text>
+
 
                             {/* Danh sách đáp án */}
-                            {q.answers.map((a) => (
-                                <Text
-                                    key={a.option}
-                                    style={{
-                                        color: a.option === q.correct ? 'green' : '#333',
-                                        fontWeight: a.option === q.correct ? 'bold' : 'normal',
-                                        marginBottom: 4,
-                                    }}
-                                >
-                                    {a.option}. {a.text}
-                                </Text>
-                            ))}
+                            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                                {/* Cột 1 */}
+                                <View style={{ flex: 1, paddingRight: 8 }}>
+                                    {q.answers.slice(0, Math.ceil(q.answers.length / 2)).map((a) => (
+                                        <Text
+                                            key={a.option}
+                                            style={{
+                                                color: a.option === q.correct ? 'green' : '#333',
+                                                fontWeight: a.option === q.correct ? 'bold' : 'normal',
+                                                marginBottom: 6,
+                                            }}
+                                        >
+                                            {a.option}. {a.text}
+                                        </Text>
+                                    ))}
+                                </View>
+
+                                {/* Cột 2 */}
+                                <View style={{ flex: 1, paddingLeft: 8 }}>
+                                    {q.answers.slice(Math.ceil(q.answers.length / 2)).map((a) => (
+                                        <Text
+                                            key={a.option}
+                                            style={{
+                                                color: a.option === q.correct ? 'green' : '#333',
+                                                fontWeight: a.option === q.correct ? 'bold' : 'normal',
+                                                marginBottom: 6,
+                                            }}
+                                        >
+                                            {a.option}. {a.text}
+                                        </Text>
+                                    ))}
+                                </View>
+                            </View>
                             <View style={styles.buttonContainer}>
                                 <TouchableOpacity
                                     style={[styles.button, { backgroundColor: '#2196F3' }]}

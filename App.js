@@ -103,12 +103,12 @@ export default function App() {
     );
 
     return (
-        <View style={{ flex: 1 }}>
+        <View style={styles.center}>
             <View style={{ flex: 1, display: active === 0 ? 'flex' : 'none' }}>
                 <FlatList
                     data={[{ key: 'content' }]} // Mảng data giả
                     renderItem={() => (
-                        <View style={{ flex: 1, marginTop: 40 }}>
+                        <View >
                             <TouchableOpacity onPress={() => setShowPointInput(!showPointInput)} style={styles.button}>
                                 <Text style={styles.buttonText}>
                                     {showPointInput ? 'Ẩn nhập điểm/câu' : 'Hiện nhập điểm/câu'}
@@ -139,7 +139,8 @@ export default function App() {
                 <Tab2 />
             </View>
             <View style={{ flex: 1, display: active === 2 ? 'flex' : 'none' }}>
-                <ScrollView style={{ flex: 1, marginTop: 40 }}>
+                <ScrollView >
+
                     <TouchableOpacity onPress={() => setShowPointInput(!showPointInput)} style={styles.button}>
                         <Text style={styles.buttonText}>
                             {showPointInput ? 'Ẩn nhập xếp loại' : 'Hiện nhập xếp loại'}

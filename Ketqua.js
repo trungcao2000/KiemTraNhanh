@@ -101,7 +101,7 @@ export const Ketqua = ({
         }
     };
     return (
-        <ScrollView contentContainerStyle={styles.scrollView}>
+        <ScrollView contentContainerStyle={styles.container}>
 
             <TouchableOpacity onPress={exportToExcel} style={[styles.button, { marginTop: 10 }]}>
                 <Text style={styles.buttonText}>📥 Xuất kết quả ra Excel</Text>

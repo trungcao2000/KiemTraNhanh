@@ -4,54 +4,59 @@ import {
 } from 'react-native';
 // Styles
 
-const primaryColor = '#3498db';
-const textColor = '#222';
-const mutedColor = '#666';
-const borderRadius = 12;
+// Colors
+const primaryColor = '#3498db'; // Primary color
+const textColor = '#222'; // Dark text for readability
+const mutedColor = '#666'; // Lighter text color for secondary text
+const borderRadius = 12; // Consistent border radius
+
 export const styles = StyleSheet.create({
-    // Layout chung
+    // Layout
     center: {
-        width: '100%',
-        alignItems: 'center',
+        flex: 1,
+        paddingVertical: 10,
     },
     container: {
         flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-
+        paddingHorizontal: 20,
     },
+
     // Typography
     title: {
-        fontSize: 16,
+        fontSize: 18,
         fontWeight: '700',
         color: textColor,
-        textAlign: 'center',
+
+        marginVertical: 5,
     },
     subtitle: {
-        fontSize: 18,
+        fontSize: 16,
         color: mutedColor,
         textAlign: 'center',
         marginVertical: 12,
     },
     paragraph: {
-        fontSize: 16,
+        fontSize: 14,
         color: '#555',
         textAlign: 'center',
         lineHeight: 24,
+        marginBottom: 16,
     },
 
     // Modal
     modalOverlay: {
         flex: 1,
         justifyContent: 'center',
+        alignItems: 'center',
         backgroundColor: 'rgba(0,0,0,0.4)',
     },
     modalContainer: {
         backgroundColor: '#fff',
-        padding: 30,
+        padding: 20,
         borderRadius,
         marginHorizontal: 30,
         elevation: 10,
+        maxWidth: 400, // Ensure modal doesn't stretch too wide
     },
 
     // Input
@@ -59,11 +64,12 @@ export const styles = StyleSheet.create({
         borderBottomWidth: 1,
         borderColor: '#ccc',
         borderRadius: 6,
-        paddingVertical: 10,
-        paddingHorizontal: 14,
+        paddingVertical: 12,
+        paddingHorizontal: 16,
         fontSize: 16,
         backgroundColor: '#fff',
         width: '100%',
+        marginBottom: 20,
     },
 
     // Buttons
@@ -73,12 +79,12 @@ export const styles = StyleSheet.create({
         paddingVertical: 12,
         paddingHorizontal: 16,
         alignItems: 'center',
-        margin: 2, // 👈 Thêm margin đều 4 cạnh
-        elevation: 3,
+        marginVertical: 10,
+        elevation: 5,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
+        shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.1,
-        shadowRadius: 4,
+        shadowRadius: 8,
     },
     buttonText: {
         color: '#fff',
@@ -89,8 +95,7 @@ export const styles = StyleSheet.create({
         flexDirection: 'row',
         width: '100%',
         justifyContent: 'space-between',
-        paddingHorizontal: 16,
-        paddingVertical: 8,
+
     },
 
     // Answer options
@@ -106,6 +111,7 @@ export const styles = StyleSheet.create({
         borderWidth: 2,
         borderColor: '#ccc',
         marginBottom: 12,
+        elevation: 2,
     },
     circle: {
         width: 22,
@@ -127,7 +133,7 @@ export const styles = StyleSheet.create({
     // Sub Tab
     subTabBar: {
         flexDirection: 'row',
-        backgroundColor: '#e9ecef',
+        backgroundColor: '#f5f5f5',
         borderRadius,
         marginVertical: 10,
         overflow: 'hidden',
@@ -136,6 +142,7 @@ export const styles = StyleSheet.create({
         flex: 1,
         paddingVertical: 12,
         alignItems: 'center',
+        backgroundColor: '#f9f9f9',
     },
     subTabButtonActive: {
         backgroundColor: '#fff',
@@ -150,11 +157,6 @@ export const styles = StyleSheet.create({
         color: primaryColor,
         fontWeight: '700',
     },
-    subTabContent: {
-        marginTop: 10,
-        alignItems: 'center',
-        width: '100%',
-    },
 
     // Info Card
     infoCard: {
@@ -163,6 +165,7 @@ export const styles = StyleSheet.create({
         padding: 16,
         width: '100%',
         marginBottom: 16,
+        elevation: 2,
     },
     infoText: {
         fontSize: 14,
@@ -174,7 +177,8 @@ export const styles = StyleSheet.create({
     listItem: {
         fontSize: 16,
         color: '#444',
-        marginVertical: 6,
+        marginVertical: 8,
+        paddingLeft: 16,
     },
 
     // Utility
