@@ -14,11 +14,11 @@ export const styles = StyleSheet.create({
     // Layout
     center: {
         flex: 1,
-        paddingVertical: 10,
+        paddingVertical: 20,
+        marginHorizontal: 5
     },
     container: {
         flex: 1,
-        paddingHorizontal: 20,
     },
 
     // Typography
@@ -46,8 +46,7 @@ export const styles = StyleSheet.create({
     // Modal
     modalOverlay: {
         flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
+
         backgroundColor: 'rgba(0,0,0,0.4)',
     },
     modalContainer: {

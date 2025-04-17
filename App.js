@@ -108,10 +108,13 @@ export default function App() {
                 <FlatList
                     data={[{ key: 'content' }]} // Mảng data giả
                     renderItem={() => (
-                        <View >
-                            <TouchableOpacity onPress={() => setShowPointInput(!showPointInput)} style={styles.button}>
+                        <View style={styles.center}>
+                            <TouchableOpacity
+                                onPress={() => setShowPointInput(!showPointInput)}
+                                style={styles.button}
+                            >
                                 <Text style={styles.buttonText}>
-                                    {showPointInput ? 'Ẩn nhập điểm/câu' : 'Hiện nhập điểm/câu'}
+                                    {showPointInput ? '🙈 Ẩn nhập điểm/câu' : '🔍 Hiện nhập điểm/câu'}
                                 </Text>
                             </TouchableOpacity>
 
@@ -139,16 +142,15 @@ export default function App() {
                 <Tab2 />
             </View>
             <View style={{ flex: 1, display: active === 2 ? 'flex' : 'none' }}>
-                <ScrollView >
-
+                <ScrollView style={styles.center}>
                     <TouchableOpacity onPress={() => setShowPointInput(!showPointInput)} style={styles.button}>
                         <Text style={styles.buttonText}>
-                            {showPointInput ? 'Ẩn nhập xếp loại' : 'Hiện nhập xếp loại'}
+                            {showPointInput ? '🙈 Ẩn nhập xếp loại' : '🔍 Hiện nhập xếp loại'}
                         </Text>
                     </TouchableOpacity>
 
                     {showPointInput && (
-                        <View style={styles.scrollView}>
+                        <View style={styles.container}>
                             {/* Ngưỡng xếp loại */}
                             <Text style={{ fontWeight: 'bold', fontSize: 16 }}>🔧 Ngưỡng xếp loại:</Text>
 
@@ -186,6 +188,7 @@ export default function App() {
             </View>
 
             <View style={styles.tabBar}>
+
                 <TouchableOpacity
                     onPress={() => setActive(0)}
                     style={[styles.tabButton, active === 0 && styles.activeTab]}

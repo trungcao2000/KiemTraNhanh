@@ -520,6 +520,12 @@ export const Camera = ({ results, setResults, questions = [] }) => {
                     </View>
                 );
             })}
+            <TouchableOpacity
+                onPress={() => exportToPowerPoint(questions)}
+                style={{ paddingVertical: 5, alignItems: 'center' }}
+            >
+                <Text style={{ fontSize: 16, color: '#2196F3' }}>📤 Xuất PowerPoint</Text>
+            </TouchableOpacity>
 
             {/* Điều hướng */}
             <View style={[styles.answerButton, { flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 }]}>
@@ -530,12 +536,7 @@ export const Camera = ({ results, setResults, questions = [] }) => {
                 >
                     <Text style={styles.buttonText}>← Trước</Text>
                 </TouchableOpacity>
-                <TouchableOpacity
-                    onPress={() => exportToPowerPoint(questions)}
-                    style={{ paddingVertical: 10, alignItems: 'center' }}
-                >
-                    <Text style={{ fontSize: 16, color: '#2196F3' }}>📤 Xuất file PowerPoint</Text>
-                </TouchableOpacity>
+
                 <TouchableOpacity
                     onPress={nextQuestion}
                     disabled={currentIndex === questions.length - 1}
@@ -544,7 +545,6 @@ export const Camera = ({ results, setResults, questions = [] }) => {
                     <Text style={styles.buttonText}>Tiếp →</Text>
                 </TouchableOpacity>
             </View>
-
 
 
         </View>

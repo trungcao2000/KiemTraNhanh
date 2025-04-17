@@ -101,10 +101,10 @@ export const Ketqua = ({
         }
     };
     return (
-        <ScrollView contentContainerStyle={styles.container}>
+        <ScrollView style={styles.container}>
 
-            <TouchableOpacity onPress={exportToExcel} style={[styles.button, { marginTop: 10 }]}>
-                <Text style={styles.buttonText}>📥 Xuất kết quả ra Excel</Text>
+            <TouchableOpacity activeOpacity={0.8} onPress={exportToExcel} style={[styles.button, { marginTop: 10 }]}>
+                <Text style={styles.buttonText}>📤 Xuất kết quả ra Excel</Text>
             </TouchableOpacity>
             {/* 🎯 PHẦN 1: XẾP LOẠI HỌC SINH */}
             <Text style={{ fontWeight: 'bold', fontSize: 20, margin: 10 }}>🎯 Xếp loại học sinh</Text>
