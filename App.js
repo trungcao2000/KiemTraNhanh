@@ -4,36 +4,35 @@ import {
     Text,
     TouchableOpacity,
     TextInput,
-    ScrollView, FlatList
+    ScrollView, FlatList, Alert
 } from 'react-native';
 
 import { styles } from './Style';
 import { Giaovien } from './Giaovien';
 import { Hocsinh } from './Hocsinh';
 import { Camera } from './Camera';
-import { Ketqua } from './Ketqua';
 import { useResults } from './Context';
 
 // Root App
 export default function App() {
     const {
-        results,
-        setResults,
-        points,
         rankThresholds,
         setRankThresholds,
         questions,
         setQuestions,
         students,
         setStudents,
-        pointPerQuestion,
-        setPointPerQuestion,
-        clearAllData,
+        currentIndex,
+        setCurrentIndex,
+        results,
+        setResults,
+        clearAllData
     } = useResults();
     // Quản lý trạng thái active để chuyển tab
     const [active, setActive] = useState(0);
     const [activeSubTab, setActiveSubTab] = useState(0); // chuyển vào trong đây
     const [showPointInput, setShowPointInput] = useState(false);
+    const [newPoint, setNewPoint] = useState('');
     // Welcome screen
     const WelcomeScreen = () => (
         <ScrollView contentContainerStyle={styles.scrollView}>
@@ -65,7 +64,8 @@ export default function App() {
         const renderContent = () => {
             switch (activeSubTab) {
                 case 0:
-                    return <Giaovien questions={questions} setQuestions={setQuestions} clearAllData={clearAllData} />;
+                    return <Giaovien questions={questions} setQuestions={setQuestions} />
+
                 case 1:
                     return <Hocsinh students={students} setStudents={setStudents} />;
                 default:
@@ -93,99 +93,103 @@ export default function App() {
         );
     };
 
-    const Tab2 = () => <Camera results={results} setResults={setResults} questions={questions} />;
-    const Tab3 = () => (
-        <Ketqua
-            results={results}
-            points={points}
-            rankThresholds={rankThresholds}
-        />
-    );
+
+
+    const Tab2 = () => {
+        return (
+
+            <Camera questions={questions} currentIndex={currentIndex} setCurrentIndex={setCurrentIndex} results={results}
+                setResults={setResults} rankThresholds={rankThresholds} setRankThresholds={setRankThresholds} clearAllData={clearAllData} />
+        )
+    }
+
 
     return (
         <View style={styles.center}>
             <View style={{ flex: 1, display: active === 0 ? 'flex' : 'none' }}>
                 <FlatList
                     data={[{ key: 'content' }]} // Mảng data giả
-                    renderItem={() => (
-                        <View style={styles.center}>
+                    renderItem={() =>
+                        <ScrollView style={styles.center}>
                             <TouchableOpacity
                                 onPress={() => setShowPointInput(!showPointInput)}
-                                style={styles.button}
+                                style={[styles.button, { backgroundColor: 'rgba(0, 0, 0, 0.3)' }]}
                             >
                                 <Text style={styles.buttonText}>
-                                    {showPointInput ? '🙈 Ẩn nhập điểm/câu' : '🔍 Hiện nhập điểm/câu'}
+                                    {showPointInput ? '🙈 Ẩn tạo điểm/câu' : '🔍 Hiện tạo điểm/câu'}
                                 </Text>
                             </TouchableOpacity>
 
-                            {showPointInput && (
-                                <View style={styles.container}>
-                                    <Text style={styles.title}>Nhập số điểm/câu</Text>
-                                    <TextInput
-                                        style={styles.textInput}
-                                        placeholder="Nhập điểm số/câu VD 0.25 ..."
-                                        value={pointPerQuestion}
-                                        onChangeText={setPointPerQuestion}
-                                        keyboardType="numeric"
-                                    />
-                                </View>
-                            )}
+                            {
+                                showPointInput && (
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 10 }}>
+                                        <TextInput
+                                            placeholder="Điểm cho tất cả"
+                                            value={newPoint}
+                                            onChangeText={(text) => {
+                                                // Cho phép số và duy nhất 1 dấu chấm
+                                                let cleaned = text.replace(/[^0-9.]/g, '');
 
-                            {/* Subtabs hoặc nội dung chính */}
-                            <SubTabGiaovien labels={['Trắc nghiệm', 'Học sinh']} />
-                        </View>
-                    )}
+                                                // Chỉ giữ lại dấu chấm đầu tiên nếu có nhiều
+                                                const firstDotIndex = cleaned.indexOf('.');
+                                                if (firstDotIndex !== -1) {
+                                                    cleaned =
+                                                        cleaned.substring(0, firstDotIndex + 1) +
+                                                        cleaned
+                                                            .substring(firstDotIndex + 1)
+                                                            .replace(/\./g, '');
+                                                }
+
+                                                setNewPoint(cleaned);
+                                            }}
+                                            style={{
+                                                flex: 1,
+                                                borderWidth: 1,
+                                                borderColor: '#ccc',
+                                                padding: 8,
+                                                borderRadius: 5,
+                                                marginRight: 10
+                                            }}
+                                            keyboardType="numeric"
+                                        />
+                                        <TouchableOpacity
+                                            onPress={() => {
+                                                const value = parseInt(newPoint);
+                                                if (!isNaN(value) && value > 0) {
+                                                    const updated = questions.map(q => ({ ...q, points: value }));
+                                                    setQuestions(updated);
+                                                    Alert.alert('✅ Thành công', `Đã cập nhật ${questions.length} câu hỏi với điểm = ${value}`);
+                                                } else {
+                                                    Alert.alert('⚠️ Lỗi', 'Vui lòng nhập số điểm hợp lệ (> 0)');
+                                                }
+                                            }}
+                                            style={{
+                                                backgroundColor: '#2196F3',
+                                                paddingVertical: 10,
+                                                paddingHorizontal: 15,
+                                                borderRadius: 5
+                                            }}
+                                        >
+                                            <Text style={{ color: '#fff', fontWeight: 'bold' }}>Áp dụng</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                )
+                            }
+                            <SubTabGiaovien labels={['Tạo Câu Hỏi', 'Tạo Danh Sách Học Sinh']} />
+                        </ScrollView>
+
+                    }
                 />
             </View>
 
             <View style={{ flex: 1, display: active === 1 ? 'flex' : 'none' }}>
+
+
                 <Tab2 />
-            </View>
-            <View style={{ flex: 1, display: active === 2 ? 'flex' : 'none' }}>
-                <ScrollView style={styles.center}>
-                    <TouchableOpacity onPress={() => setShowPointInput(!showPointInput)} style={styles.button}>
-                        <Text style={styles.buttonText}>
-                            {showPointInput ? '🙈 Ẩn nhập xếp loại' : '🔍 Hiện nhập xếp loại'}
-                        </Text>
-                    </TouchableOpacity>
 
-                    {showPointInput && (
-                        <View style={styles.container}>
-                            {/* Ngưỡng xếp loại */}
-                            <Text style={{ fontWeight: 'bold', fontSize: 16 }}>🔧 Ngưỡng xếp loại:</Text>
-
-                            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                                {['gioi', 'kha', 'tb'].map((key) => (
-                                    <View key={key} style={{ flex: 1, marginHorizontal: 4 }}>
-                                        <Text style={{ fontSize: 14, fontWeight: '600', marginBottom: 4 }}>
-                                            {key === 'gioi' ? '🌟 ≥ Giỏi' : key === 'kha' ? '👍 ≥ Khá' : '🙂 ≥ Trung bình'}
-                                        </Text>
-                                        <TextInput
-                                            keyboardType="decimal-pad"
-                                            value={String(rankThresholds[key] ?? '')}
-                                            placeholder={
-                                                key === 'gioi'
-                                                    ? 'Giỏi'
-                                                    : key === 'kha'
-                                                        ? 'Khá'
-                                                        : key === 'trungbinh'
-                                                            ? 'Trung bình'
-                                                            : 'Yếu'
-                                            }
-                                            onChangeText={(text) => setRankThresholds((prev) => ({ ...prev, [key]: text }))}
-                                            style={styles.textInput}
-                                        />
-                                    </View>
-                                ))}
-                            </View>
-                        </View>
-                    )}
-
-                    {/* Subtabs hoặc nội dung chính */}
-                    <Tab3 />
-                </ScrollView>
 
             </View>
+
 
             <View style={styles.tabBar}>
 
@@ -200,15 +204,15 @@ export default function App() {
                     onPress={() => setActive(1)}
                     style={[styles.tabButton, active === 1 && styles.activeTab]}
                 >
-                    <Text style={[styles.tabButtonText, active === 1 && styles.activeText]}>Quét mã</Text>
+                    <Text style={[styles.tabButtonText, active === 1 && styles.activeText]}>Kiểm Tra</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity
+                {/* <TouchableOpacity
                     onPress={() => setActive(2)}
                     style={[styles.tabButton, active === 2 && styles.activeTab]}
                 >
                     <Text style={[styles.tabButtonText, active === 2 && styles.activeText]}>Kết quả</Text>
-                </TouchableOpacity>
+                </TouchableOpacity> */}
             </View>
         </View>
     );

@@ -11,7 +11,7 @@ import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import XLSX from 'xlsx';
 
-export const Giaovien = ({ questions, setQuestions, clearAllData }) => {
+export const Giaovien = ({ questions, setQuestions }) => {
 
     const [current, setCurrent] = useState({
         question: '',
@@ -22,6 +22,7 @@ export const Giaovien = ({ questions, setQuestions, clearAllData }) => {
             { option: 'D', text: '' }
         ],
         correct: 'A',
+        points: 1,
     });
 
     const [editingIndex, setEditingIndex] = useState(null);
@@ -85,9 +86,10 @@ export const Giaovien = ({ questions, setQuestions, clearAllData }) => {
                 { option: 'A', text: '' },
                 { option: 'B', text: '' },
                 { option: 'C', text: '' },
-                { option: 'D', text: '' },
+                { option: 'D', text: '' }
             ],
             correct: '',
+            points: 1,
         });
         setEditingIndex(null);
     };
@@ -146,7 +148,8 @@ export const Giaovien = ({ questions, setQuestions, clearAllData }) => {
                     { option: 'C', text: row[3] },
                     { option: 'D', text: row[4] },
                 ],
-                correct: row[5] || 'A',
+                correct: row[5] || 'A', // Nếu không có đáp án đúng, mặc định là A
+                points: row[6] || 1, // Nếu không có điểm, mặc định là 10
             }));
 
             // Giả sử bạn có useState:
@@ -159,46 +162,41 @@ export const Giaovien = ({ questions, setQuestions, clearAllData }) => {
     };
 
     const handleExport = async (questions) => {
+        if (!questions || questions.length === 0) {
+            Alert.alert('Thông báo', 'Không có dữ liệu để xuất.');
+            return;
+        }
+
         try {
-            if (!questions || questions.length === 0) {
-                Alert.alert('⚠️ Không có dữ liệu', 'Không có câu hỏi để xuất!');
-                return;
-            }
+            // Chuyển đổi dữ liệu
+            const sheetData = questions.map((q, index) => ({
+                'Câu hỏi': q.question,
+                'Đáp án A': q.answers.find(a => a.option === 'A')?.text || '',
+                'Đáp án B': q.answers.find(a => a.option === 'B')?.text || '',
+                'Đáp án C': q.answers.find(a => a.option === 'C')?.text || '',
+                'Đáp án D': q.answers.find(a => a.option === 'D')?.text || '',
+                'Đáp án đúng': q.correct,
+                'Số điểm': q.points // Thêm số điểm vào dữ liệu xuất
+            }));
 
-            // Chuyển questions sang mảng 2D (header + rows)
-            const header = ['Câu hỏi', 'A', 'B', 'C', 'D', 'Đáp án đúng'];
-            const data = questions.map(q => [
-                q.question,
-                q.answers.find(a => a.option === 'A')?.text || '',
-                q.answers.find(a => a.option === 'B')?.text || '',
-                q.answers.find(a => a.option === 'C')?.text || '',
-                q.answers.find(a => a.option === 'D')?.text || '',
-                q.correct
-            ]);
-
-            const worksheet = XLSX.utils.aoa_to_sheet([header, ...data]);
+            const worksheet = XLSX.utils.json_to_sheet(sheetData);
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, 'Danh sách câu hỏi');
 
             const wbout = XLSX.write(workbook, { type: 'base64', bookType: 'xlsx' });
 
-            const uri = FileSystem.documentDirectory + 'DanhSachCauHoi.xlsx';
-
+            const uri = FileSystem.cacheDirectory + 'CauHoiTracNghiem.xlsx';
             await FileSystem.writeAsStringAsync(uri, wbout, {
-                encoding: FileSystem.EncodingType.Base64
+                encoding: FileSystem.EncodingType.Base64,
             });
 
-            // Attempt to share the file
-            const shareResult = await Sharing.shareAsync(uri);
-
-            if (shareResult.status === 'shared') {
-                Alert.alert('✅ Thành công', 'Đã xuất file Excel!');
-            } else if (shareResult.status === 'dismissed') {
-                Alert.alert('❌ Đã hủy', 'Bạn đã hủy việc xuất file.');
-            }
-        } catch (err) {
-            console.error('Lỗi export Excel:', err);
-            Alert.alert('❌ Lỗi', 'Không thể xuất file Excel!');
+            await Sharing.shareAsync(uri, {
+                mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                dialogTitle: 'Chia sẻ file Excel câu hỏi',
+                UTI: 'com.microsoft.excel.xlsx',
+            });
+        } catch (error) {
+            Alert.alert('Lỗi', 'Đã xảy ra lỗi khi xuất file Excel.');
         }
     };
 
@@ -210,56 +208,36 @@ export const Giaovien = ({ questions, setQuestions, clearAllData }) => {
     return (
 
         <View style={styles.center}>
-            <Text style={styles.title}>
-                Tạo câu hỏi
-            </Text>
-
-            {/* Button to open Modal */}
             <View style={styles.buttonContainer}>
                 <TouchableOpacity
                     style={styles.button}
-                    onPress={() => setModalVisible(true)}
-                >
-                    <Text style={styles.buttonText}>Thêm câu hỏi 📝</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                    style={[styles.button, { backgroundColor: '#f44336' }]}
-                    onPress={() => {
-                        Alert.alert(
-                            'Xác nhận xoá',
-                            'Bạn có chắc chắn muốn xoá toàn bộ dữ liệu kết quả?',
-                            [
-                                { text: 'Huỷ', style: 'cancel' },
-                                {
-                                    text: 'Xoá',
-                                    style: 'destructive',
-                                    onPress: () => clearAllData(), // 👈 gọi hàm đúng cách nè
-                                },
-                            ],
-                            { cancelable: true }
-                        );
-                    }}
-                >
-                    <Text style={styles.buttonText}>Xoá kết quả 🗑️</Text>
-                </TouchableOpacity>
-
-            </View>
-            <View style={styles.buttonContainer}>
-                <TouchableOpacity
-                    style={[styles.button]}
                     onPress={handleImport}
                 >
                     <Text style={styles.buttonText}>📥 Nhập Excel</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                    style={[styles.button]}
+                    style={styles.button}
                     onPress={() => handleExport(questions)}
                 >
                     <Text style={styles.buttonText}>📤 Xuất Excel</Text>
                 </TouchableOpacity>
 
             </View>
+            <Text style={styles.title}>
+                Tạo câu hỏi
+            </Text>
+
+
+            <TouchableOpacity
+                style={styles.button}
+                onPress={() => setModalVisible(true)}
+            >
+                <Text style={styles.buttonText}>Thêm câu hỏi 📝</Text>
+            </TouchableOpacity>
+
+
+
 
 
             <TextInput
@@ -281,7 +259,6 @@ export const Giaovien = ({ questions, setQuestions, clearAllData }) => {
                         Danh sách câu hỏi
                     </Text>
 
-
                     {filteredQuestions.map((q, index) => (
                         <View
                             key={index}
@@ -294,12 +271,13 @@ export const Giaovien = ({ questions, setQuestions, clearAllData }) => {
                                 backgroundColor: '#f9f9f9',
                             }}
                         >
-                            {/* Hàng chứa câu hỏi + nút */}
-
+                            {/* Hàng chứa câu hỏi + số điểm */}
                             <Text style={styles.title}>
                                 Câu {index + 1}: {q.question}
                             </Text>
-
+                            <Text style={{ fontStyle: 'italic', marginBottom: 10 }}>
+                                Số điểm: {q.points || 1} {/* Nếu không có điểm, mặc định là 10 */}
+                            </Text>
 
                             {/* Danh sách đáp án */}
                             <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
@@ -335,6 +313,8 @@ export const Giaovien = ({ questions, setQuestions, clearAllData }) => {
                                     ))}
                                 </View>
                             </View>
+
+                            {/* Nút Sửa và Xoá */}
                             <View style={styles.buttonContainer}>
                                 <TouchableOpacity
                                     style={[styles.button, { backgroundColor: '#2196F3' }]}
@@ -350,13 +330,9 @@ export const Giaovien = ({ questions, setQuestions, clearAllData }) => {
                                 </TouchableOpacity>
                             </View>
                         </View>
-
                     ))}
-
                 </ScrollView>
-
             )}
-
 
             {/* Modal for Create or Edit Question */}
             <Modal
@@ -397,7 +373,29 @@ export const Giaovien = ({ questions, setQuestions, clearAllData }) => {
                                         style={styles.textInput}
                                     />
                                 ))}
+                                {/* Điểm số */}
 
+                                <TextInput
+                                    placeholder="Số điểm"
+                                    value={current.points?.toString() || ''}
+                                    onChangeText={(text) => {
+                                        // Nếu người dùng xóa hết, cho phép chuỗi rỗng
+                                        if (text === '') {
+                                            setCurrent({ ...current, points: null });
+                                        } else {
+                                            // Loại bỏ tất cả ký tự không phải là số
+                                            const newValue = text.replace(/[^0-9]/g, '');
+
+                                            // Chuyển đổi giá trị sang số
+                                            const points = parseInt(newValue);
+
+                                            // Nếu points là NaN hoặc nhỏ hơn hoặc bằng 0, mặc định là 1
+                                            setCurrent({ ...current, points: points > 0 ? points : 1 });
+                                        }
+                                    }}
+                                    style={styles.textInput}
+                                    keyboardType='numeric'
+                                />
                                 {/* Chọn đáp án đúng */}
                                 <Text style={{ marginVertical: 8, fontWeight: 'bold' }}>Chọn đáp án đúng:</Text>
                                 <View style={styles.answerOptions}>

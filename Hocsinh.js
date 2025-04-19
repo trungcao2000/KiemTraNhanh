@@ -9,7 +9,8 @@ import ViewShot from 'react-native-view-shot';
 import * as MediaLibrary from 'expo-media-library';
 import { styles } from './Style';
 
-export const Hocsinh = ({ students, setStudents }) => {
+export const Hocsinh = ({ students = [], setStudents }) => {
+    const [numStudents, setNumStudents] = useState('');
     const [name, setName] = useState('');
     const [pendingStudents, setPendingStudents] = useState([]);
     const [editingIndex, setEditingIndex] = useState(null);
@@ -18,37 +19,37 @@ export const Hocsinh = ({ students, setStudents }) => {
 
     const viewShotRef = useRef();
 
-    const addOrUpdateStudent = () => {
-        if (!name.trim()) return;
+    // const addOrUpdateStudent = () => {
+    //     if (!name.trim()) return;
 
-        // Kiểm tra tên có tồn tại trong danh sách học sinh đã thêm hoặc đang chờ
-        const isNameExist = [...students, ...pendingStudents].some(student => student.name.trim().toLowerCase() === name.trim().toLowerCase());
+    //     // Kiểm tra tên có tồn tại trong danh sách học sinh đã thêm hoặc đang chờ
+    //     const isNameExist = [...students, ...pendingStudents].some(student => student.name.trim().toLowerCase() === name.trim().toLowerCase());
 
-        if (isNameExist) {
-            alert('Tên này đã tồn tại! Vui lòng chọn tên khác.');
-            return;
-        }
+    //     if (isNameExist) {
+    //         alert('Tên này đã tồn tại! Vui lòng chọn tên khác.');
+    //         return;
+    //     }
 
-        if (editingIndex !== null) {
-            // Sửa trực tiếp trong students
-            const updated = [...students];
-            updated[editingIndex] = { name };
-            setStudents(updated);
-            setEditingIndex(null);
-        } else {
-            // Thêm vào pending nếu không đang sửa
-            setPendingStudents([...pendingStudents, { name }]);
-        }
+    //     if (editingIndex !== null) {
+    //         // Sửa trực tiếp trong students
+    //         const updated = [...students];
+    //         updated[editingIndex] = { name };
+    //         setStudents(updated);
+    //         setEditingIndex(null);
+    //     } else {
+    //         // Thêm vào pending nếu không đang sửa
+    //         setPendingStudents([...pendingStudents, { name }]);
+    //     }
 
-        setName('');
-    };
+    //     setName('');
+    // };
 
 
-    const confirmAddStudents = () => {
-        setStudents([...students, ...pendingStudents]);
-        setPendingStudents([]);
-        setName('');
-    };
+    // const confirmAddStudents = () => {
+    //     setStudents([...students, ...pendingStudents]);
+    //     setPendingStudents([]);
+    //     setName('');
+    // };
 
     const removeStudent = (index) => {
         const updated = [...students];
@@ -60,6 +61,7 @@ export const Hocsinh = ({ students, setStudents }) => {
         }
     };
 
+    // Hàm tạo mảng học sinh từ 1 đến số nhập vào
 
     const generateQRSetForOne = (student) => {
         const qrSet = ['A', 'B', 'C', 'D'].map((ans) => {
@@ -88,7 +90,7 @@ export const Hocsinh = ({ students, setStudents }) => {
         try {
             const permission = await MediaLibrary.requestPermissionsAsync();
             if (!permission.granted) {
-                alert("Cần quyền truy cập ảnh để lưu mã QR.");
+                Alert.alert("Cần quyền truy cập ảnh để lưu mã QR.");
                 return;
             }
 
@@ -99,32 +101,58 @@ export const Hocsinh = ({ students, setStudents }) => {
             Alert.alert("✅ Đã lưu ảnh toàn bộ mã QR");
         } catch (error) {
             console.error("Lỗi khi lưu ảnh:", error);
-            alert("❌ Lỗi khi lưu ảnh.");
+            Alert.alert("❌ Lỗi khi lưu ảnh.");
         }
     };
 
+    const filteredStudents = Array.isArray(students)
+        ? students.filter(student =>
+            student.name && typeof student.name === 'string' &&
+            student.name.toLowerCase().includes(name.toLowerCase())
+        )
+        : [];
 
-    const filteredStudents = students.filter(student =>
-        student.name.toLowerCase().includes(name.toLowerCase())
-    );
+    const generateStudents = () => {
+        const number = parseInt(numStudents);
+        if (isNaN(number) || number <= 0) {
+            Alert.alert('Vui lòng nhập một số hợp lệ');
+            return;
+        }
+
+        const studentArray = [];
+        for (let i = 1; i <= number; i++) {
+            studentArray.push(`${i}. `); // Tạo tên học sinh theo số index
+        }
+        setStudents(studentArray); // Lưu mảng học sinh vào state
+    };
     return (
 
         <View style={styles.center}>
             <Text style={styles.title}>
-                Danh sách học sinh
+                Tạo Nhanh Theo Số Lượng Học Sinh
             </Text>
-
-            <TextInput
+            <View style={styles.buttonContainer}>
+                <TextInput
+                    style={styles.textInput}
+                    placeholder="Nhập số lượng học sinh"
+                    keyboardType="numeric"
+                    value={numStudents}
+                    onChangeText={setNumStudents}
+                />
+                <TouchableOpacity
+                    onPress={generateStudents}
+                    style={styles.button}
+                >
+                    <Text style={styles.buttonText}>
+                        {`Tạo Số Lượng ${numStudents}`}
+                    </Text>
+                </TouchableOpacity>
+            </View>
+            {/* <TextInput
                 placeholder="Tạo mới, tìm theo tên..."
                 value={name}
                 onChangeText={setName}
-                style={{
-                    margin: 10,
-                    padding: 10,
-                    borderWidth: 1,
-                    borderColor: '#ccc',
-                    borderRadius: 8,
-                }}
+                style={styles.textInput}
             />
             <TouchableOpacity
                 onPress={addOrUpdateStudent}
@@ -133,9 +161,9 @@ export const Hocsinh = ({ students, setStudents }) => {
                 <Text style={styles.buttonText}>
                     {editingIndex !== null ? 'Cập nhật' : 'Thêm học sinh vào danh sách tạm'}
                 </Text>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
 
-            {pendingStudents.length > 0 && (
+            {/* {pendingStudents.length > 0 && (
                 <TouchableOpacity
                     onPress={confirmAddStudents}
                     style={styles.button}
@@ -144,10 +172,11 @@ export const Hocsinh = ({ students, setStudents }) => {
                         ✅ Xác nhận thêm {pendingStudents.length} học sinh
                     </Text>
                 </TouchableOpacity>
-            )}
+            )} */}
             {/* Tạo QR cho tất cả */}
             {students.length > 0 && (
-                <View style={{ marginTop: 10 }}>
+                <View style={styles.buttonContainer}>
+
                     <TouchableOpacity
                         onPress={generateAllQRs}
                         style={styles.button}
@@ -156,12 +185,18 @@ export const Hocsinh = ({ students, setStudents }) => {
                             🔳 Tạo tất cả mã QR
                         </Text>
                     </TouchableOpacity>
+                    <TouchableOpacity
+                        onPress={() => setStudents([])}
+                        style={[styles.button, { backgroundColor: '#f44336' }]}
+                    >
+                        <Text style={styles.buttonText}>🗑️ Xoá Hết</Text>
+                    </TouchableOpacity>
                 </View>
             )}
 
 
             {/* Danh sách chờ */}
-            {pendingStudents.length > 0 && (
+            {/* {pendingStudents.length > 0 && (
                 <View style={styles.center}>
                     <Text style={styles.title}>
                         📝 Danh sách chờ xác nhận:
@@ -203,15 +238,17 @@ export const Hocsinh = ({ students, setStudents }) => {
                         </View>
                     ))}
                 </View>
-            )}
+            )} */}
 
-
+            <Text style={styles.title}>
+                Danh sách học sinh
+            </Text>
             <View style={{
                 backgroundColor: '#fff',
             }}>
 
                 {/* Danh sách chính */}
-                {filteredStudents.map((student, index) => (
+                {students.map((student, index) => (
                     <View
                         key={index}
                         style={{
@@ -222,19 +259,10 @@ export const Hocsinh = ({ students, setStudents }) => {
                         }}
                     >
                         {/* Dòng tên học sinh */}
-                        <Text style={{ marginBottom: 8, fontWeight: 'bold', fontSize: 16 }}>{student.name}</Text>
+                        <Text style={{ marginBottom: 8, fontWeight: 'bold', fontSize: 16 }}>{student}</Text>
 
                         {/* Dòng chức năng */}
                         <View style={{ flexDirection: 'row', justifyContent: 'flex-start', flexWrap: 'wrap', gap: 8 }}>
-                            <TouchableOpacity
-                                onPress={() => {
-                                    setEditingIndex(index);
-                                    setName(student.name);
-                                }}
-                                style={[styles.button, { backgroundColor: '#2196F3' }]}
-                            >
-                                <Text style={styles.buttonText}>✏️ Sửa</Text>
-                            </TouchableOpacity>
                             <TouchableOpacity
                                 onPress={() => removeStudent(index)}
                                 style={[styles.button, { backgroundColor: '#f44336' }]}
@@ -274,58 +302,16 @@ export const Hocsinh = ({ students, setStudents }) => {
                         <ScrollView>
                             <ViewShot ref={viewShotRef} options={{ format: "jpg", quality: 0.9 }}>
                                 {allQRs.map((student, index) => (
-                                    <View key={index} style={{ marginBottom: 20 }}>
-                                        <Text style={{ fontWeight: 'bold', fontSize: 16, marginBottom: 5 }}>
-                                            {student.name}
-                                        </Text>
-                                        <View
-                                            style={{
-                                                flexDirection: 'row',
-                                                flexWrap: 'wrap',
-                                                justifyContent: 'space-evenly',
-                                                alignItems: 'center',
-                                                paddingHorizontal: 12,
-                                            }}
-                                        >
+                                    <View key={index} style={styles.studentContainer}>
+                                        <Text style={styles.studentName}>{student.name}</Text>
+                                        <View style={styles.qrContainer}>
                                             {student.qrs.map((qr, i) => (
-                                                <View
-                                                    key={i}
-                                                    style={{
-                                                        width: 160,
-                                                        padding: 16,
-                                                        marginVertical: 12,
-                                                        backgroundColor: '#fff',
-                                                        borderWidth: 1,
-                                                        borderColor: '#999',
-                                                        borderRadius: 8,
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center',
-                                                        elevation: 2,
-                                                    }}
-                                                >
-                                                    <Text
-                                                        style={{
-                                                            fontWeight: 'bold',
-                                                            fontSize: 14,
-                                                            marginBottom: 10,
-                                                            transform: [{ rotate: '180deg' }],
-                                                            textAlign: 'center',
-                                                        }}
-                                                    >
+                                                <View key={i} style={styles.qrBox}>
+                                                    <Text style={styles.qrText}>
                                                         {student.name} ({qr.answer})
                                                     </Text>
-                                                    <Image
-                                                        source={{ uri: qr.uri }}
-                                                        style={{ width: 120, height: 120 }}
-                                                    />
-                                                    <Text
-                                                        style={{
-                                                            fontSize: 13,
-                                                            fontStyle: 'italic',
-                                                            marginTop: 10,
-                                                            textAlign: 'center',
-                                                        }}
-                                                    >
+                                                    <Image source={{ uri: qr.uri }} style={styles.qrImage} />
+                                                    <Text style={styles.qrFooterText}>
                                                         {student.name} ({qr.answer})
                                                     </Text>
                                                 </View>
@@ -334,6 +320,7 @@ export const Hocsinh = ({ students, setStudents }) => {
                                     </View>
                                 ))}
                             </ViewShot>
+
                         </ScrollView>
 
                         <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 12 }}>

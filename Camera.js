@@ -3,30 +3,29 @@ import {
     View,
     Text,
     TouchableOpacity,
-    TextInput, Alert, Vibration, Animated
+    TextInput, Alert, Vibration, Animated, ScrollView
 } from 'react-native';
-import { CameraView, useCameraPermissions } from 'expo-camera';
-
+import { CameraView } from 'expo-camera';
+import { Ketqua } from './Ketqua';
 import { styles } from './Style';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import PptxGenJS from 'pptxgenjs';
 import { Buffer } from 'buffer';
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
 // {
 //     "name": "Nguyễn Văn A",
 //     "answer": "B"
 //   }
 
-export const Camera = ({ results, setResults, questions = [] }) => {
+export const Camera = ({ questions = [], currentIndex, setCurrentIndex, rankThresholds, setRankThresholds, clearAllData }) => {
 
-    const [currentIndex, setCurrentIndex] = useState(0);
-    // const [answers, setAnswers] = useState({});
     const [goTo, setGoTo] = useState('');
     const [selectedAnswer, setSelectedAnswer] = useState(null);
-
-
-    const [inputTime, setInputTime] = useState('0');
+    const [results, setResults] = useState([]);
+    const [displayedResults, setDisplayedResults] = useState([]);
+    const [activeSubTab, setActiveSubTab] = useState(0);
+    const [inputTime, setInputTime] = useState('1');
     const [timeLeft, setTimeLeft] = useState(inputTime);
     const fadeAnim = useRef(new Animated.Value(1)).current;
     const countdownColor = '#ff3b30'; // đỏ cảnh báo
@@ -35,32 +34,39 @@ export const Camera = ({ results, setResults, questions = [] }) => {
     const [showPresentation, setShowPresentation] = useState(false);
     const [cameraVisible, setCameraVisible] = useState(false);
 
-    const [permission, requestPermission] = useCameraPermissions();
-    const scannedSet = useRef(new Set());
-    const [displayedResults, setDisplayedResults] = useState([]);
 
     const togglePresentation = () => {
         setShowPresentation(!showPresentation);
     };
 
-    const timeoutMap = useRef({}); // Lưu timer theo key
+
 
     useEffect(() => {
-        const latest = {};
+        const loadData = async () => {
+            try {
+                const storedResults = await AsyncStorage.getItem('result');
+                if (storedResults) {
+                    setResults(JSON.parse(storedResults));
+                }
+            } catch (error) {
+                console.log('❌ Lỗi khi load dữ liệu:', error);
+            }
+        };
 
-        results.forEach((res) => {
-            const key = `${res.name}-${currentIndex}`;
-            latest[key] = res;
-        });
+        loadData();
+    }, []);
 
-        // Gộp thêm bounds từ displayedResults nếu có
-        const merged = Object.values(latest).map((res) => {
-            const match = displayedResults.find(r => r.name === res.name && r.question === res.question);
-            return match ? { ...res, bounds: match.bounds } : res;
-        });
+    useEffect(() => {
+        const saveData = async () => {
+            try {
+                await AsyncStorage.setItem('result', JSON.stringify(results));
+            } catch (error) {
+                console.log('❌ Lỗi khi lưu dữ liệu:', error);
+            }
+        };
 
-        setDisplayedResults(merged);
-    }, [results, currentIndex]);
+        saveData();
+    }, [results]);
 
     // Khi chuyển câu hỏi → reset timeLeft
     useEffect(() => {
@@ -68,6 +74,7 @@ export const Camera = ({ results, setResults, questions = [] }) => {
             setTimeLeft(questionTime);
         }
     }, [currentIndex, questionTime]);
+
 
     // Đếm ngược thời gian
     useEffect(() => {
@@ -113,12 +120,6 @@ export const Camera = ({ results, setResults, questions = [] }) => {
         }
     }, [timeLeft]);
 
-    useEffect(() => {
-        if (!permission) {
-            requestPermission();
-        }
-    }, []);
-
 
     useEffect(() => {
         const idx = parseInt(goTo) - 1; // 👈 Trừ 1 để chuyển từ "câu số" sang "index"
@@ -128,49 +129,35 @@ export const Camera = ({ results, setResults, questions = [] }) => {
     }, [goTo]);
 
 
-    // const handleAnswer = (selectedOption) => {
-    //     setAnswers({ ...answers, [currentIndex]: selectedOption });
-    // };
-
 
     const question = questions[currentIndex];
-    if (!question) return <Text>Chưa có câu hỏi nào!</Text>;
+    if (!question) return <Text style={styles.title}>Chưa có câu hỏi nào!</Text>;
 
 
-    if (!permission) return <View />;
 
-    if (!permission.granted) {
-        return (
-            <View style={styles.center}>
-                <Text style={styles.title}>Ứng dụng cần quyền truy cập camera</Text>
 
-                <TouchableOpacity
-                    onPress={requestPermission}
-                    style={styles.button}
-                >
-                    <Text style={styles.buttonText}>
-                        Cấp quyền
-                    </Text>
-                </TouchableOpacity>
-            </View>
-        );
-    }
-
+    const scannedSet = useRef(new Set());
+    const timeoutMap = useRef({});
 
     const handleScanned = (scanned) => {
         try {
             const json = JSON.parse(scanned.data); // QR chứa { name, answer }
+
+            // Kiểm tra tính hợp lệ của dữ liệu
+            if (!json.name || !json.answer) {
+                throw new Error("Dữ liệu không hợp lệ");
+            }
+
+            const question = questions[currentIndex];
+            if (!question) return;
+
             const key = `${json.name}-${currentIndex}`;
-            const correct = questions[currentIndex]?.correct;
+            const correct = question.correct;
             const isCorrect = correct === json.answer;
             const bounds = scanned?.bounds?.origin ? scanned.bounds : null;
 
-            const alreadyAnswered = results.some(
-                (r) => r.name === json.name && r.questionIndex === currentIndex
-            );
-
             if (scannedSet.current.has(key)) {
-                // 🔁 Đã quét rồi trong phiên hiện tại → chỉ cập nhật bounds nếu có
+                // Đã quét rồi, chỉ cập nhật bounds
                 setDisplayedResults(prev =>
                     prev.map(r => {
                         if (`${r.name}-${r.questionIndex}` === key) {
@@ -179,15 +166,15 @@ export const Camera = ({ results, setResults, questions = [] }) => {
                         return r;
                     })
                 );
-
-
                 return;
             }
 
-            // Thêm key vào bộ theo dõi tạm thời
+            // Thêm key vào danh sách đã quét
             scannedSet.current.add(key);
+            const alreadyAnswered = results.some(
+                (r) => r.name === json.name && r.questionIndex === currentIndex
+            );
 
-            // 👉 Nếu chưa từng trả lời ở câu này thì mới ghi vào results
             if (!alreadyAnswered) {
                 setResults(prev => [
                     ...prev,
@@ -196,23 +183,26 @@ export const Camera = ({ results, setResults, questions = [] }) => {
                         question: questions[currentIndex].question,
                         questionIndex: currentIndex,
                         isCorrect,
+                        points: questions[currentIndex].points,
                     },
                 ]);
             }
+            // Tránh thêm kết quả trùng vào displayedResults
+            setDisplayedResults(prev => {
+                const exists = prev.some(r => `${r.name}-${r.questionIndex}` === key);
+                if (exists) return prev;
+                return [
+                    ...prev,
+                    {
+                        ...json,
+                        questionIndex: currentIndex,
+                        isCorrect,
+                        bounds,
+                    },
+                ];
+            });
 
-            // Hiển thị overlay tạm thời
-            setDisplayedResults(prev => [
-                ...prev,
-                {
-                    ...json,
-                    question: questions[currentIndex].question,
-                    questionIndex: currentIndex,
-                    isCorrect,
-                    bounds,
-                },
-            ]);
-
-            // Tự động xoá overlay sau 5s (không xoá result thật)
+            // Xoá overlay sau 3s
             timeoutMap.current[key] = setTimeout(() => {
                 scannedSet.current.delete(key);
                 setDisplayedResults(prev =>
@@ -221,31 +211,31 @@ export const Camera = ({ results, setResults, questions = [] }) => {
             }, 3000);
 
         } catch (err) {
-            console.log("Không đọc được QR JSON:", err);
+            console.log("❌ Không đọc được QR JSON:", err);
         }
     };
 
+    // Clean up on unmount
+    useEffect(() => {
+        return () => {
+            Object.values(timeoutMap.current).forEach(clearTimeout);
+        };
+    }, []);
+
+
+
+
+    const goToQuestion = (newIndex) => {
+
+        setCurrentIndex(newIndex);
+    };
 
     const prevQuestion = () => {
-        scannedSet.current.clear();
-
-        setCurrentIndex(prev => {
-            const newIndex = Math.max(prev - 1, 0); // Không nhỏ hơn 0
-            // const overlays = results.filter(r => r.questionIndex === newIndex && r.bounds);
-            // setDisplayedResults(overlays);
-            return newIndex;
-        });
+        goToQuestion(Math.max(currentIndex - 1, 0));
     };
 
     const nextQuestion = () => {
-        scannedSet.current.clear();
-
-        setCurrentIndex(prev => {
-            const newIndex = Math.min(prev + 1, questions.length - 1); // Không vượt quá tổng câu hỏi
-            // const overlays = results.filter(r => r.questionIndex === newIndex && r.bounds);
-            // setDisplayedResults(overlays);
-            return newIndex;
-        });
+        goToQuestion(Math.min(currentIndex + 1, questions.length - 1));
     };
 
 
@@ -326,8 +316,50 @@ export const Camera = ({ results, setResults, questions = [] }) => {
 
 
     const renderCameraView = () => (
-        <View style={{ flex: 1 }}>
-            {/* Nút đóng camera */}
+        <View style={styles.container}>
+            {/* Camera */}
+            <CameraView
+                onBarcodeScanned={handleScanned}
+                barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
+                style={styles.container}
+            />
+
+            {/* Hiển thị kết quả quét */}
+            {displayedResults.map((result, index) => {
+                const { bounds, name, answer, isCorrect } = result;
+                const origin = bounds?.origin;
+
+                return (
+                    origin && (
+                        <View
+                            key={index}
+                            style={{
+                                position: 'absolute',
+                                left: origin.x,  // Nhân tỷ lệ với tọa độ x
+                                top: origin.y,   // Nhân tỷ lệ với tọa độ y
+                                backgroundColor: 'rgba(255,255,255,0.95)',
+                                borderRadius: 6,
+                                paddingHorizontal: 8,
+                                paddingVertical: 4,
+                                borderColor: isCorrect ? '#00C851' : '#FF6347',
+                                borderWidth: 2,
+                                shadowColor: '#000',
+                                shadowOpacity: 0.2,
+                                shadowOffset: { width: 1, height: 1 },
+                                shadowRadius: 3,
+                            }}
+                        >
+                            <Text style={{
+                                color: isCorrect ? '#00C851' : '#FF6347',
+                                fontWeight: 'bold',
+                                fontSize: 16,
+                            }}>
+                                {name} ({answer})
+                            </Text>
+                        </View>
+                    )
+                );
+            })}
             <TouchableOpacity
                 onPress={() => setCameraVisible(false)}
                 style={styles.button}
@@ -335,40 +367,6 @@ export const Camera = ({ results, setResults, questions = [] }) => {
                 <Text style={styles.buttonText}>❌ Đóng</Text>
             </TouchableOpacity>
 
-            {/* Camera */}
-            <CameraView
-                style={{ flex: 1 }}
-                onBarcodeScanned={handleScanned}
-                barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
-            />
-
-            {/* Hiển thị kết quả quét */}
-            {displayedResults.map((result, index) => {
-                const { bounds, name, answer, isCorrect } = result;
-                const origin = bounds?.origin;
-                if (!origin) return null;
-
-                return (
-                    <View
-                        key={index}
-                        style={{
-                            position: 'absolute',
-                            left: origin.x,
-                            top: origin.y,
-                            backgroundColor: 'rgba(255,255,255,0.9)',
-                            borderRadius: 6,
-                            paddingHorizontal: 8,
-                            paddingVertical: 4,
-                            borderColor: isCorrect ? 'green' : 'red',
-                            borderWidth: 2,
-                        }}
-                    >
-                        <Text style={{ color: isCorrect ? 'green' : 'red', fontWeight: 'bold' }}>
-                            {name} ({answer})
-                        </Text>
-                    </View>
-                );
-            })}
         </View>
     );
 
@@ -386,7 +384,13 @@ export const Camera = ({ results, setResults, questions = [] }) => {
         }
     };
     const renderQuestionView = () => (
-        <View style={{ flex: 1 }}>
+        <View style={styles.center}>
+            <TouchableOpacity
+                onPress={() => exportToPowerPoint(questions)}
+                style={styles.button}
+            >
+                <Text style={styles.buttonText}>📤 Xuất PowerPoint</Text>
+            </TouchableOpacity>
             {/* Thiết lập thời gian cho mỗi câu */}
             <Text style={{ fontSize: 18, paddingVertical: 20 }}>
                 ⏱ Nhập thời gian mỗi câu (giây): (0 để không giới hạn)
@@ -397,6 +401,7 @@ export const Camera = ({ results, setResults, questions = [] }) => {
                 value={inputTime}
                 onChangeText={(text) => setInputTime(text)}
                 style={styles.textInput}
+                keyboardType='numeric'
             />
 
             <TouchableOpacity
@@ -460,9 +465,8 @@ export const Camera = ({ results, setResults, questions = [] }) => {
 
             {/* Câu hỏi */}
             <Text style={styles.subtitle}>
-                Câu {currentIndex + 1}: {question.question}
+                Câu {currentIndex + 1}: {question?.question ?? ''}
             </Text>
-
             {/* Đáp án 2 cột */}
             {Array.from({ length: Math.ceil(question?.answers?.length / 2) }).map((_, rowIndex) => {
                 const rowAnswers = question.answers.slice(rowIndex * 2, rowIndex * 2 + 2);
@@ -520,12 +524,6 @@ export const Camera = ({ results, setResults, questions = [] }) => {
                     </View>
                 );
             })}
-            <TouchableOpacity
-                onPress={() => exportToPowerPoint(questions)}
-                style={{ paddingVertical: 5, alignItems: 'center' }}
-            >
-                <Text style={{ fontSize: 16, color: '#2196F3' }}>📤 Xuất PowerPoint</Text>
-            </TouchableOpacity>
 
             {/* Điều hướng */}
             <View style={[styles.answerButton, { flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 }]}>
@@ -547,13 +545,53 @@ export const Camera = ({ results, setResults, questions = [] }) => {
             </View>
 
 
+
         </View>
     );
 
+
+    const SubTabCamera = ({ labels }) => {
+        const renderContent = () => {
+            switch (activeSubTab) {
+                case 0:
+                    return <View style={styles.container}>{renderQuestionView()}</View>;
+                case 1:
+                    return <Ketqua results={results} setResults={setResults} rankThresholds={rankThresholds} setRankThresholds={setRankThresholds} clearAllData={clearAllData} />;
+
+                default:
+                    return <Text>Không có nội dung</Text>;
+            }
+        };
+
+        return (
+            <View style={styles.container}>
+                <View style={styles.subTabBar}>
+                    {labels.map((label, index) => (
+                        <TouchableOpacity
+                            key={index}
+                            style={[styles.subTabButton, activeSubTab === index && styles.subTabButtonActive]}
+                            onPress={() => setActiveSubTab(index)}
+                        >
+                            <Text style={activeSubTab === index ? styles.subTabTextActive : styles.subTabText}>
+                                {label}
+                            </Text>
+                        </TouchableOpacity>
+                    ))}
+                </View>
+                <View style={styles.container}>{renderContent()}</View>
+            </View>
+        );
+    };
+
     return (
 
-        <View style={{ flex: 1, paddingHorizontal: 20 }}>{cameraVisible ? (renderCameraView()) : (renderQuestionView())}</View>
-
+        <View style={styles.container}>
+            {cameraVisible ? (
+                renderCameraView()
+            ) : (
+                <SubTabCamera labels={['Quét Mã', 'Kết Quả']} />
+            )}
+        </View>
     );
 };
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ScrollView, Text, View, TextInput, Modal, TouchableOpacity } from 'react-native';
+import { ScrollView, Text, View, TextInput, Modal, TouchableOpacity, Alert } from 'react-native';
 import { styles } from './Style';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
@@ -7,13 +7,34 @@ import * as XLSX from 'xlsx';
 
 
 export const Ketqua = ({
-    results,
-    points,
-    rankThresholds }) => {
+    rankThresholds, setRankThresholds, results, setResults, clearAllData }) => {
     const [nameFilter, setNameFilter] = useState('');
     const [answerFilter, setAnswerFilter] = useState('');
     const [correctFilter, setCorrectFilter] = useState('');
     const [modalVisible, setModalVisible] = useState(false);
+    const calculateStudentScores = (results) => {
+        const scoresMap = {};
+
+        results.forEach(result => {
+            const id = result.name;
+            const point = result.isCorrect ? result.points : 0;
+
+            if (!scoresMap[id]) {
+                scoresMap[id] = 0;
+            }
+
+            scoresMap[id] += point;
+        });
+
+        // Chuyển từ object sang mảng đơn giản
+        return Object.keys(scoresMap).map((studentId) => ({
+            studentId,
+            totalPoints: scoresMap[studentId],
+        }));
+    };
+
+    const scores = calculateStudentScores(results);
+
     const exportToExcel = async () => {
         try {
             // Sheet 1: Danh sách câu trả lời chi tiết
@@ -28,15 +49,11 @@ export const Ketqua = ({
             const sheet1 = XLSX.utils.json_to_sheet(sheet1Data);
 
             // Sheet 2: Tổng điểm + xếp loại
-            const sheet2Data = Object.entries(points).map(([name, score]) => {
-                let rank = '🙂 Trung bình';
-                if (score >= rankThresholds.gioi) rank = '🌟 Giỏi';
-                else if (score >= rankThresholds.kha) rank = '👍 Khá';
-
+            const sheet2Data = scores.map((student) => {
                 return {
-                    'Tên': name,
-                    'Tổng điểm': score,
-                    'Xếp loại': rank,
+                    'Tên': student.studentId,
+                    'Tổng điểm': student.totalPoints,
+                    'Xếp loại': getRank(student.totalPoints),
                 };
             });
 
@@ -86,7 +103,8 @@ export const Ketqua = ({
     const getRank = (score) => {
         if (score >= rankThresholds.gioi) return '🌟 Giỏi';
         if (score >= rankThresholds.kha) return '👍 Khá';
-        return '🙂 Trung bình';
+        if (score >= 5) return '🙂 Trung bình';
+        return '⚠️ Yếu';
     };
     const renderSelectedFilter = () => {
         switch (correctFilter) {
@@ -100,32 +118,50 @@ export const Ketqua = ({
                 return 'None';
         }
     };
+
+
     return (
         <ScrollView style={styles.container}>
 
-            <TouchableOpacity activeOpacity={0.8} onPress={exportToExcel} style={[styles.button, { marginTop: 10 }]}>
+            <TouchableOpacity
+                style={styles.button}
+                onPress={() => {
+                    Alert.alert(
+                        'Xác nhận làm mới dữ liệu',
+                        'Bạn có chắc chắn muốn xoá toàn bộ kết quả và làm mới toàn bộ không?',
+                        [
+                            { text: 'Huỷ', style: 'cancel' },
+                            {
+                                text: 'Xoá',
+                                style: 'destructive',
+                                onPress: () => clearAllData({ setResults }),
+                            },
+                        ],
+                        { cancelable: true }
+                    );
+                }}
+            >
+                <Text style={styles.buttonText}>Làm Mới Toàn Bộ 🔁</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity activeOpacity={0.8} onPress={exportToExcel} style={styles.button}>
                 <Text style={styles.buttonText}>📤 Xuất kết quả ra Excel</Text>
             </TouchableOpacity>
             {/* 🎯 PHẦN 1: XẾP LOẠI HỌC SINH */}
-            <Text style={{ fontWeight: 'bold', fontSize: 20, margin: 10 }}>🎯 Xếp loại học sinh</Text>
+            <Text style={{ fontWeight: 'bold', fontSize: 20 }}>🎯 Xếp loại học sinh</Text>
 
+            <Text style={{ fontWeight: 'bold', fontSize: 16 }}>🏆 Tổng điểm và xếp loại:</Text>
 
+            {scores.map((student, i) => (
+                <Text key={i} style={{ marginBottom: 4 }}>
+                    {student.studentId}: {student.totalPoints} điểm – {getRank(student.totalPoints)}
+                </Text>
+            ))}
 
-
-            {/* Tổng điểm và xếp loại */}
-            <Text style={{ fontWeight: 'bold', fontSize: 16, marginTop: 20 }}>🏆 Tổng điểm và xếp loại:</Text>
-            {
-                Object.entries(points).map(([name, score], i) => (
-                    <Text key={i} style={{ marginBottom: 4 }}>
-                        {name}: {score} điểm – {getRank(score)}
-                    </Text>
-                ))
-            }
-
-            <View style={{ height: 1, backgroundColor: '#ccc', marginVertical: 20 }} />
+            <View style={{ height: 1, backgroundColor: '#ccc', marginVertical: 5 }} />
 
             {/* 🔍 PHẦN 2: LỌC VÀ XEM KẾT QUẢ */}
-            <Text style={{ fontWeight: 'bold', fontSize: 20, marginBottom: 10 }}>🔍 Lọc và xem kết quả</Text>
+            <Text style={{ fontWeight: 'bold', fontSize: 20 }}>🔍 Lọc và xem kết quả</Text>
 
             <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.button}>
                 <Text style={styles.buttonText}>Lọc kết quả</Text>
@@ -158,8 +194,8 @@ export const Ketqua = ({
             </Modal>
 
             {/* Bộ lọc tên + đáp án */}
-            <View style={[styles.center, { paddingHorizontal: 20 }]}>
-                <View style={{ flexDirection: 'row', columnGap: 10, marginVertical: 10 }}>
+            <View style={styles.center}>
+                <View style={{ flexDirection: 'row', columnGap: 5 }}>
                     <TextInput
                         value={nameFilter}
                         onChangeText={setNameFilter}
@@ -169,7 +205,7 @@ export const Ketqua = ({
                     <TextInput
                         value={answerFilter}
                         onChangeText={setAnswerFilter}
-                        placeholder="Đáp án"
+                        placeholder="Đáp án A,B,C..."
                         style={[styles.textInput, { flex: 1 }]}
                     />
                 </View>

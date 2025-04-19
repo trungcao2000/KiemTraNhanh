@@ -14,8 +14,9 @@ export const styles = StyleSheet.create({
     // Layout
     center: {
         flex: 1,
-        paddingVertical: 20,
-        marginHorizontal: 5
+        marginVertical: 25,
+        marginHorizontal: 5,
+
     },
     container: {
         flex: 1,
@@ -26,60 +27,57 @@ export const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: '700',
         color: textColor,
-
-        marginVertical: 5,
     },
     subtitle: {
         fontSize: 16,
         color: mutedColor,
         textAlign: 'center',
-        marginVertical: 12,
     },
-    paragraph: {
-        fontSize: 14,
-        color: '#555',
-        textAlign: 'center',
-        lineHeight: 24,
-        marginBottom: 16,
-    },
+    // paragraph: {
+    //     fontSize: 14,
+    //     color: '#555',
+    //     textAlign: 'center',
+    //     lineHeight: 24,
+    // },
 
     // Modal
     modalOverlay: {
         flex: 1,
-
         backgroundColor: 'rgba(0,0,0,0.4)',
     },
     modalContainer: {
         backgroundColor: '#fff',
+        marginVertical: '10%',
         padding: 20,
         borderRadius,
-        marginHorizontal: 30,
         elevation: 10,
+
+
+        // Optional: If it's not filling the whole screen
+
         maxWidth: 400, // Ensure modal doesn't stretch too wide
     },
 
     // Input
     textInput: {
-        borderBottomWidth: 1,
+        borderWidth: 2,
         borderColor: '#ccc',
-        borderRadius: 6,
-        paddingVertical: 12,
-        paddingHorizontal: 16,
-        fontSize: 16,
+        borderRadius: 4,
+        margin: 5,
+        paddingVertical: 10,
+        paddingHorizontal: 10,
+        fontSize: 14,
         backgroundColor: '#fff',
-        width: '100%',
-        marginBottom: 20,
     },
 
     // Buttons
     button: {
         backgroundColor: primaryColor,
         borderRadius,
-        paddingVertical: 12,
-        paddingHorizontal: 16,
+        paddingVertical: 10,
+        paddingHorizontal: 10,
         alignItems: 'center',
-        marginVertical: 10,
-        elevation: 5,
+        marginVertical: 5,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.1,
@@ -97,19 +95,16 @@ export const styles = StyleSheet.create({
 
     },
 
-    // Answer options
-    answerOptions: {
-        marginBottom: 16,
-    },
+
     answerButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: 14,
+        padding: 8,
         borderRadius,
         backgroundColor: '#fff',
         borderWidth: 2,
         borderColor: '#ccc',
-        marginBottom: 12,
+        marginBottom: 10,
         elevation: 2,
     },
     circle: {
@@ -134,7 +129,6 @@ export const styles = StyleSheet.create({
         flexDirection: 'row',
         backgroundColor: '#f5f5f5',
         borderRadius,
-        marginVertical: 10,
         overflow: 'hidden',
     },
     subTabButton: {
@@ -205,7 +199,6 @@ export const styles = StyleSheet.create({
     },
     modalContent: {
         backgroundColor: 'white',
-        padding: 20,
         borderRadius,
     },
     option: {
@@ -241,4 +234,50 @@ export const styles = StyleSheet.create({
         color: primaryColor,
         fontWeight: 'bold',
     },
+    studentContainer: {
+        marginBottom: 20, // Giảm khoảng cách giữa các học sinh
+    },
+    studentName: {
+        fontWeight: 'bold',
+        fontSize: 16,
+        marginBottom: 10,
+    },
+    qrContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'space-between', // Đảm bảo có khoảng cách đều giữa các phần tử
+        alignItems: 'flex-start', // Căn đầu theo chiều dọc
+        paddingHorizontal: 4, // Giảm khoảng cách padding bên ngoài để giảm không gian trống
+    },
+    qrBox: {
+        width: '48%', // Đảm bảo 2 phần tử trên mỗi dòng
+        padding: 12, // Giảm padding bên trong
+        marginVertical: 6, // Tăng khoảng cách giữa các box QR
+        backgroundColor: '#fff',
+        borderWidth: 1,
+        borderColor: '#999',
+        borderRadius: 8,
+        alignItems: 'center',
+        justifyContent: 'center',
+        elevation: 2, // Thêm shadow cho box
+        marginHorizontal: 4, // Giảm khoảng cách giữa các box để các phần tử không quá tách rời
+    },
+    qrText: {
+        fontWeight: 'bold',
+        fontSize: 14,
+        marginBottom: 10,
+        transform: [{ rotate: '180deg' }],
+        textAlign: 'center',
+    },
+    qrImage: {
+        width: 120,
+        height: 120,
+    },
+    qrFooterText: {
+        fontSize: 13,
+        fontStyle: 'italic',
+        marginTop: 10,
+        textAlign: 'center',
+    },
+
 });
